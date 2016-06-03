@@ -15,7 +15,8 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@android:color/darker_gray">
 
             <TextView
                 android:layout_width="match_parent"
@@ -26,7 +27,8 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@android:color/holo_green_light">
 
             <TextView
                 android:layout_width="match_parent"
