@@ -4,7 +4,9 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.RelativeLayout;
 
 /**
@@ -12,6 +14,7 @@ import android.widget.RelativeLayout;
  * 一个可以上拉显示新View的布局
  */
 public class UpToShowLayout extends RelativeLayout {
+    private Context context;
     int lastMoveY = 0;
     boolean isTime = false;
     private int translateY = 0;
@@ -19,26 +22,35 @@ public class UpToShowLayout extends RelativeLayout {
     private boolean isSecondShow = false;
     private boolean isTimeToRefresh = false;
     private boolean isRefreshing = false;
+    private IHeaderView iheaderView;
+    private boolean isOutThreshold = false;
+    private View headerView;
+    private RefreshListener refreshListener;
 
     private ViewChangeListener viewChangeListener;
 
     public UpToShowLayout(Context context) {
         super(context);
+        this.context = context;
     }
 
     public UpToShowLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.context = context;
     }
 
     public UpToShowLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        this.context = context;
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        isTwoChild();
+//        isTwoChild();
         getChildAt(0).layout(0, 0, getWidth(), getHeight());
         getChildAt(1).layout(0, getHeight(), getWidth(), getHeight() * 2);
+        getChildAt(2).layout(0, -200, getWidth(), 0);
+        System.out.println(getChildAt(2).getHeight() + "高度");
     }
 
     @Override
@@ -189,11 +201,28 @@ public class UpToShowLayout extends RelativeLayout {
                     return super.onTouchEvent(event);
                 }
                 getChildAt(0).setTranslationY(translateY);
+                if (headerView != null) {
+                    headerView.setTranslationY(translateY);
+                }
+
+                if (headerView != null && getChildAt(0).getTranslationY() > 200) {
+                    isOutThreshold = true;
+                    iheaderView.outThreshold(headerView);
+                } else if (isOutThreshold) {
+                    isOutThreshold = false;
+                    iheaderView.inThreshold(headerView);
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 isTimeToRefresh = false;
                 if (getChildAt(0).getTranslationY() > 200) {
                     isRefreshing = true;
+                    if (iheaderView != null) {
+                        iheaderView.startRefreshing(headerView);
+                    }
+                    if (refreshListener != null) {
+                        refreshListener.startRefreshing();
+                    }
                     //达到了下拉刷新的标准
                     ValueAnimator animator = ValueAnimator.ofFloat(getChildAt(0).getTranslationY(), 200);
                     animator.setTarget(getChildAt(0));
@@ -202,6 +231,9 @@ public class UpToShowLayout extends RelativeLayout {
                         @Override
                         public void onAnimationUpdate(ValueAnimator animation) {
                             getChildAt(0).setTranslationY((Float) animation.getAnimatedValue());
+                            if (headerView != null) {
+                                headerView.setTranslationY((Float) animation.getAnimatedValue());
+                            }
                         }
                     });
                 } else {
@@ -212,6 +244,9 @@ public class UpToShowLayout extends RelativeLayout {
                         @Override
                         public void onAnimationUpdate(ValueAnimator animation) {
                             getChildAt(0).setTranslationY((Float) animation.getAnimatedValue());
+                            if (headerView != null) {
+                                headerView.setTranslationY((Float) animation.getAnimatedValue());
+                            }
                         }
                     });
                 }
@@ -267,6 +302,9 @@ public class UpToShowLayout extends RelativeLayout {
     }
 
     public void stopRefreshing() {
+        if (iheaderView != null) {
+            iheaderView.stopRefreshing(headerView);
+        }
         ValueAnimator animator = ValueAnimator.ofFloat(getChildAt(0).getTranslationY(), 0);
         animator.setTarget(getChildAt(0));
         animator.setDuration((long) (getChildAt(0).getTranslationY() * 2)).start();
@@ -274,12 +312,25 @@ public class UpToShowLayout extends RelativeLayout {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 getChildAt(0).setTranslationY((Float) animation.getAnimatedValue());
+                if (headerView != null) {
+                    headerView.setTranslationY((Float) animation.getAnimatedValue());
+                }
             }
         });
+        isOutThreshold = false;
         isRefreshing = false;
     }
 
-    interface ViewChangeListener {
+    public void setHeaderView(IHeaderView headerView) {
+        this.iheaderView = headerView;
+        this.headerView = getChildAt(2);
+    }
+
+    public void setRefreshListener(RefreshListener refreshListener) {
+        this.refreshListener = refreshListener;
+    }
+
+    public interface ViewChangeListener {
         /**
          * 第二个View出现
          * SecondView出现会有一个动画，这个方法会在动画结束后调用
@@ -303,5 +354,9 @@ public class UpToShowLayout extends RelativeLayout {
          * SecondView隐藏时会有一个动画，这个方法将在动画开始前调用
          */
         void hideBeforeAnim();
+    }
+
+    public interface RefreshListener {
+        void startRefreshing();
     }
 }
