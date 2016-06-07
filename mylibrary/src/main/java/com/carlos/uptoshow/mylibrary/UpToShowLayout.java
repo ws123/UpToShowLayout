@@ -205,10 +205,10 @@ public class UpToShowLayout extends RelativeLayout {
                     headerView.setTranslationY(translateY);
                 }
 
-                if (headerView != null && getChildAt(0).getTranslationY() > 200) {
+                if (!isOutThreshold && headerView != null && getChildAt(0).getTranslationY() > 200) {
                     isOutThreshold = true;
                     iheaderView.outThreshold(headerView);
-                } else if (isOutThreshold) {
+                } else if (isOutThreshold && getChildAt(0).getTranslationY() <= 200) {
                     isOutThreshold = false;
                     iheaderView.inThreshold(headerView);
                 }

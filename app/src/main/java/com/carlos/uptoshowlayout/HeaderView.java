@@ -2,7 +2,6 @@ package com.carlos.uptoshowlayout;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.support.v4.widget.ContentLoadingProgressBar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,10 +61,12 @@ public class HeaderView implements IHeaderView {
     @Override
     public void startRefreshing(View view) {
         ImageView imageView = (ImageView) view.findViewById(R.id.imageView);
-        RotateAnimation rotateAnimation = new RotateAnimation(0, 360);
+        RotateAnimation rotateAnimation = new RotateAnimation(0f, 360f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         rotateAnimation.setDuration(1000);
         rotateAnimation.setInterpolator(new LinearInterpolator());
         rotateAnimation.setRepeatMode(Animation.RESTART);
+        imageView.setPivotX(imageView.getWidth() / 2);
+        imageView.setPivotY(imageView.getHeight() / 2);
         rotateAnimation.setRepeatCount(999);
         imageView.startAnimation(rotateAnimation);
         ((TextView) view.findViewById(R.id.textView)).setText("正在刷新");
@@ -73,7 +74,9 @@ public class HeaderView implements IHeaderView {
 
     @Override
     public void stopRefreshing(View view) {
-        view.findViewById(R.id.imageView).clearAnimation();
+        View imageView = view.findViewById(R.id.imageView);
+        imageView.setRotation(0);
+        imageView.clearAnimation();
         ((TextView) view.findViewById(R.id.textView)).setText("下拉刷新");
     }
 }
